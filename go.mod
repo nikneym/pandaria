@@ -3,9 +3,9 @@ module pandaria
 go 1.26.3
 
 require (
+	github.com/alecthomas/kong v1.15.0
 	github.com/chromedp/chromedp v0.15.1
 	github.com/elazarl/goproxy v1.8.3
-	github.com/joho/godotenv v1.5.1
 )
 
 require (
