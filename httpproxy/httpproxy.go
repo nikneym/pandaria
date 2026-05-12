@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	dirLightpanda = "/tmp/mitm-lp"
-	dirChrome     = "/tmp/mitm-chrome"
+	dirLightpanda = "/tmp/pandaria/lp"
+	dirChrome     = "/tmp/pandaria/chrome"
 )
 
 type ctxData struct {
