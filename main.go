@@ -1,97 +1,60 @@
 package main
 
 import (
-	"fmt"
-	"io"
+	"context"
 	"log"
-	"os"
+	"os/signal"
+	"pandaria/cli"
 	"pandaria/driver"
 	"pandaria/httpproxy"
-	"sync"
+	"syscall"
 
 	"github.com/alecthomas/kong"
 	"github.com/chromedp/chromedp"
 )
 
-func start(d driver.Driver, wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	err := d.Run(
-		chromedp.Navigate("https://www.airbnb.com/"),
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func fetch(options FetchOptions) {
-	httpProxyAddr := options.HttpProxyAddr
-
+func fetch() {
 	// Start HTTP proxy.
-	go httpproxy.Run(httpProxyAddr)
-
-	var wg sync.WaitGroup
+	if cli.EnableHTTPProxy() {
+		go httpproxy.Run()
+		log.Println("Started HTTP proxy server")
+	}
 
 	// Start Chrome.
-	if options.EnableChrome {
-		chrome := driver.InitChrome(httpProxyAddr)
+	if cli.EnableChrome() {
+		chrome := driver.InitChrome()
 		defer chrome.Close()
-		wg.Add(1)
-		go start(chrome, &wg)
+		log.Println("Initialized Chrome")
+
+		go chrome.Run(
+			chromedp.Navigate(cli.URL()),
+		)
 	}
 
 	// Start LP.
-	if options.EnableLP {
-		lp := driver.InitLightpanda(httpProxyAddr)
+	if cli.EnableLP() {
+		lp := driver.InitLightpanda()
 		defer lp.Close()
-		wg.Add(1)
-		go start(lp, &wg)
+
+		go lp.Run(
+			chromedp.Navigate(cli.URL()),
+		)
 	}
 
-	wg.Wait()
-	fmt.Println("fetch completed")
-}
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+	// Wait until exit signal.
+	<-ctx.Done()
 
-func chromeDebugLog() {
-	f, err := os.Open("/tmp/pandaria/chrome-userdata-dir/chrome_debug.log")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err = io.Copy(os.Stdout, f)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-type FetchOptions struct {
-	Url                       string `arg:"" help:"Where to fetch from."`
-	HttpProxyAddr             string `help:"Address of HTTP proxy server." default:"127.0.0.1:3000"`
-	LPAddr                    string `help:"Address of Lightpanda CDP server." default:"127.0.0.1:9222"`
-	ChromeRemoteDebuggingPort uint16 `help:"Port for remote debugging Chrome (--remote-debugging-port)." default:"9223"`
-	EnableChrome              bool   `help:"Whether run a Chrome instance." default:"true"`
-	EnableLP                  bool   `help:"Whether connect to a Lightpanda instance." default:"true"`
-}
-
-var CLI struct {
-	Fetch          FetchOptions `cmd:"" help: "Fetch from a URL."`
-	ChromeDebugLog struct{}     `cmd:"" help: "Writes \"chrome_debug.log\" to stdout."`
+	log.Println("Exit signal")
 }
 
 func main() {
-	//err := godotenv.Load()
-	//if err != nil {
-	//	log.Fatal("Error loading .env file")
-	//}
-
-	ctx := kong.Parse(&CLI)
+	ctx := kong.Parse(&cli.CLI)
 	switch ctx.Command() {
 	case "fetch <url>":
-		fetch(CLI.Fetch)
-	case "chrome-debug-log":
-		chromeDebugLog()
+		fetch()
 	default:
 		panic(ctx.Command())
 	}
-
 }

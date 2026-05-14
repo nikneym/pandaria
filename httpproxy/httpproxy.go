@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"pandaria/cli"
 	"path/filepath"
 	"strings"
 
@@ -26,14 +27,14 @@ type ctxData struct {
 	intercepted bool
 }
 
-func Run(addr string) {
+func Run() {
 	proxy := goproxy.NewProxyHttpServer()
 	proxy.Verbose = false
 	proxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
 	proxy.OnRequest().DoFunc(handleRequest)
 	proxy.OnResponse().DoFunc(handleResponse)
 
-	log.Fatal(http.ListenAndServe(addr, proxy))
+	log.Fatal(http.ListenAndServe(cli.HTTPProxyAddr(), proxy))
 }
 
 func handleRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {

@@ -2,6 +2,8 @@ package driver
 
 import (
 	"context"
+	"log"
+	"pandaria/cli"
 
 	"github.com/chromedp/chromedp"
 )
@@ -14,20 +16,26 @@ type Chrome struct {
 }
 
 // InitChrome initializes a Chrome driver.
-func InitChrome(proxy string) *Chrome {
+func InitChrome() *Chrome {
 	opts := append(
 		chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.ProxyServer(proxy),
-		chromedp.Flag("disable-web-security", true),
-		chromedp.Flag("ignore-certificate-errors", true),
 		chromedp.UserAgent("Chrome"),
 		chromedp.Flag("enable-logging", true),
 		chromedp.Flag("v", "1"),
 		chromedp.UserDataDir("/tmp/pandaria/chrome-userdata-dir"),
-		chromedp.WindowSize(1200, 800),
+		chromedp.Flag("remote-debugging-port", "8080"),
+		chromedp.Flag("headless", cli.ChromeHeadless()),
 		chromedp.NoSandbox,
-		//chromedp.Flag("remote-debugging-port", "8080"),
 	)
+
+	if cli.EnableHTTPProxy() {
+		opts = append(
+			opts,
+			chromedp.ProxyServer(cli.HTTPProxyAddr()),
+			chromedp.Flag("disable-web-security", true),
+			chromedp.Flag("ignore-certificate-errors", true),
+		)
+	}
 
 	allocatorCtx, allocatorCancel := chromedp.NewExecAllocator(context.Background(), opts...)
 	cdpCtx, cdpCancel := chromedp.NewContext(allocatorCtx)
@@ -45,6 +53,9 @@ func (c *Chrome) Close() {
 	c.allocatorCancel()
 }
 
-func (c *Chrome) Run(actions ...chromedp.Action) error {
-	return chromedp.Run(c.cdpCtx, chromedp.Tasks(actions))
+func (c *Chrome) Run(actions ...chromedp.Action) {
+	err := chromedp.Run(c.cdpCtx, chromedp.Tasks(actions))
+	if err != nil {
+		log.Fatal(err)
+	}
 }

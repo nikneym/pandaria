@@ -2,6 +2,7 @@ package driver
 
 import (
 	"context"
+	"pandaria/cli"
 
 	"github.com/chromedp/chromedp"
 )
@@ -13,7 +14,7 @@ type Lightpanda struct {
 	cdpCancel       context.CancelFunc
 }
 
-func InitLightpanda(proxy string) *Lightpanda {
+func InitLightpanda() *Lightpanda {
 	//lp := exec.Command(
 	//	os.Getenv("LIGHTPANDA_BIN"),
 	//	"serve",
@@ -33,7 +34,7 @@ func InitLightpanda(proxy string) *Lightpanda {
 	//	log.Fatal(err)
 	//}
 
-	allocatorCtx, allocatorCancel := chromedp.NewRemoteAllocator(context.Background(), "ws://127.0.0.1:9222")
+	allocatorCtx, allocatorCancel := chromedp.NewRemoteAllocator(context.Background(), "ws://"+cli.LPAddr())
 	cdpCtx, cdpCancel := chromedp.NewContext(allocatorCtx)
 
 	return &Lightpanda{
