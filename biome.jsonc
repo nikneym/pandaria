@@ -1,0 +1,8 @@
+{
+  "files": {
+    "includes": ["**/*.js", "**/*.json"],
+  },
+  "formatter": {
+    "formatWithErrors": true,
+  },
+}

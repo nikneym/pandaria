@@ -10,8 +10,13 @@ type FetchOptions struct {
 	ChromeHeadless  bool   `help:"Whether run Chrome in a headless mode." default:"true"`
 }
 
+type SearchOptions struct {
+	Pattern string `arg:"" help:"What to search."`
+}
+
 type Commands struct {
-	Fetch FetchOptions `cmd:"" help: "Fetch from a URL."`
+	Fetch  FetchOptions  `cmd:"" help: "Fetch from a URL."`
+	Search SearchOptions `cmd:"" help: "Search for a pattern in MITM'd files."`
 }
 
 var CLI Commands
@@ -42,4 +47,8 @@ func EnableChrome() bool {
 
 func ChromeHeadless() bool {
 	return CLI.Fetch.ChromeHeadless
+}
+
+func SearchPattern() string {
+	return CLI.Search.Pattern
 }
