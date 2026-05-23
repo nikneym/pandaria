@@ -15,8 +15,7 @@ type SearchOptions struct {
 }
 
 type Commands struct {
-	Fetch  FetchOptions  `cmd:"" help: "Fetch from a URL."`
-	Search SearchOptions `cmd:"" help: "Search for a pattern in MITM'd files."`
+	Fetch FetchOptions `cmd:"" help: "Fetch from a URL."`
 }
 
 var CLI Commands
@@ -47,8 +46,4 @@ func EnableChrome() bool {
 
 func ChromeHeadless() bool {
 	return CLI.Fetch.ChromeHeadless
-}
-
-func SearchPattern() string {
-	return CLI.Search.Pattern
 }
